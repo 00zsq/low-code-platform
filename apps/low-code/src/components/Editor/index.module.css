@@ -1,0 +1,30 @@
+.editorContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contentContainer {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.materialPanel {
+  width: 200px;
+  overflow: hidden;
+}
+
+.canvas {
+  width: auto;
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  background-color: #f0f2f5;
+}
+
+.propertyPanel {
+  width: 200px;
+  overflow: hidden;
+}

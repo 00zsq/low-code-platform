@@ -1,0 +1,26 @@
+.property-panel {
+  width: 200px;
+  padding: 8px;
+}
+.title {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.sectionTitle {
+  margin: 15px 0 10px 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+.deleteBtn {
+  margin-top: 20px;
+}
+.emptyTip {
+  color: #999;
+}
+.propRow {
+  margin-bottom: 12px;
+}
+.inputFull {
+  width: 100%;
+}

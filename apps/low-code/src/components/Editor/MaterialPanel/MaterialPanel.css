@@ -1,0 +1,56 @@
+.material-panel {
+  width: 200px;
+  padding: 8px;
+  border-right: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.material-panel-title {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.material-category {
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.material-category-title {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+.material-item {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  margin: 6px auto;
+  cursor: move;
+  background-color: #fff;
+  transition: all 0.2s;
+}
+
+.material-item:hover {
+  border-color: #1890ff;
+}
+
+.material-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.material-icon {
+  font-size: 20px;
+  font-weight: 600;
+  color: #555;
+}

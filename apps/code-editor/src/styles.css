@@ -1,0 +1,174 @@
+/* 全局 */
+:root {
+  --bg: #0f1218;
+  --panel: #111827;
+  --panel-2: #0b1220;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --primary: #3b82f6;
+  --border: #1f2937;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    PingFang SC, Microsoft YaHei, sans-serif;
+}
+
+/* 顶部工具栏 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.left-controls,
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select {
+  height: 28px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmented .segment {
+  appearance: none;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.segmented .segment.active {
+  background: var(--primary);
+}
+
+/* 主工作区：左右分栏 */
+.app-root {
+  height: calc(100% - 45px);
+  display: flex;
+  flex-direction: column;
+}
+
+.split {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.pane {
+  height: 100%;
+  min-width: 0;
+}
+
+.pane.left {
+  background: #0b1020;
+  border-right: 1px solid var(--border);
+}
+
+.pane.right {
+  background: #0a0f1a;
+}
+
+.editor-wrapper,
+.preview-root {
+  height: 100%;
+}
+
+.resizer {
+  width: 6px;
+  background: #0f172a;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  cursor: col-resize;
+}
+
+/* 预览设备外观 */
+.device-frame {
+  position: relative;
+  margin: 16px auto;
+  background: #000;
+  border-radius: 22px;
+  border: 1px solid #1f2937;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.device-notch {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 16px;
+  border-radius: 10px;
+  background: #0a0a0a;
+}
+
+.device-screen {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* JSON 预览 */
+.json-preview {
+  width: 100%;
+  height: 100%;
+  background: #0a0f1a;
+  color: #e5e7eb;
+  overflow: auto;
+}
+
+.json-pre {
+  margin: 0;
+  padding: 12px;
+  font-size: 13px;
+}
+
+.json-error {
+  margin: 0;
+  padding: 12px;
+  color: #ef4444;
+  white-space: pre-wrap;
+}
