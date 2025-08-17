@@ -27,4 +27,6 @@
 .propertyPanel {
   width: 200px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }

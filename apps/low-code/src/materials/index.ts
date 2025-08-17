@@ -1,10 +1,12 @@
 import type { ComponentDefinition } from '../types/editor';
 import antdMaterials from './antd';
 import basicMaterials from './basic';
+import advancedMaterials from './advanced';
 
 // 导出所有物料
 export const allMaterials: ComponentDefinition[] = [
   ...basicMaterials,
+  ...advancedMaterials,
   ...antdMaterials,
 ];
 
@@ -20,5 +22,5 @@ export const materialsByCategory = allMaterials.reduce((acc, material) => {
 
 // 物料查找
 export const findMaterial = (type: string): ComponentDefinition | undefined => {
-  return allMaterials.find(material => material.type === type);
+  return allMaterials.find((material) => material.type === type);
 };

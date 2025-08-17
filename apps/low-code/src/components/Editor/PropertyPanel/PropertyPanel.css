@@ -1,6 +1,8 @@
 .property-panel {
   width: 200px;
   padding: 8px;
+  height: 100%;
+  overflow-y: auto;
 }
 .title {
   margin: 0 0 10px 0;
