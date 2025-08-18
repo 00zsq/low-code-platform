@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { useEditorStore } from '../../../store/editorStore';
 import { renderComponent } from '../../renderer';
@@ -14,6 +14,7 @@ const CanvasItem: React.FC<{
 }> = ({ component, isSelected }) => {
   const { selectComponent, addChildComponent } = useEditorStore();
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // 使用自定义拖拽 hook
   const { handleMouseDown } = useDragPosition({
@@ -24,7 +25,7 @@ const CanvasItem: React.FC<{
 
   const acceptsChildren =
     component.type === 'FlexContainer' || component.type === 'Div';
-  const [{ isOverChildDrop }, dropChild] = useDrop(() => ({
+  const [, dropChild] = useDrop(() => ({
     accept: ['MATERIAL'],
     drop: (item: { type: string }) => {
       const material = findMaterial(item.type);
@@ -61,6 +62,8 @@ const CanvasItem: React.FC<{
         selectComponent(component.id);
       }}
       onMouseDown={handleMouseDown}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         ref={
@@ -82,7 +85,13 @@ const CanvasItem: React.FC<{
           </div>
         )}
       </div>
-      {isSelected && <div className="canvas-item-label">{component.name}</div>}
+      {(isSelected || isHovered) && (
+        <div
+          className={`canvas-item-label ${isSelected ? 'selected' : 'hovered'}`}
+        >
+          {component.name}
+        </div>
+      )}
     </div>
   );
 };

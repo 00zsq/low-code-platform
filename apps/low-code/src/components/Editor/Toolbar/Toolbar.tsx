@@ -1,10 +1,7 @@
 import React from 'react';
 import { Button, InputNumber } from 'antd';
-import {
-  exportToReactCode,
-  exportToHTML,
-  exportToJSON,
-} from '../../../utils/exporter';
+import { ExportOutlined } from '@ant-design/icons';
+import ExportModal from '../ExportModal/ExportModal';
 import styles from './Toolbar.module.css';
 import { useEditorStore } from '../../../store/editorStore';
 
@@ -16,6 +13,8 @@ const Toolbar: React.FC = () => {
     setCanvasScale,
     clearCanvas,
   } = useEditorStore();
+
+  const [exportModalOpen, setExportModalOpen] = React.useState(false);
 
   return (
     <div className={styles.main}>
@@ -56,25 +55,22 @@ const Toolbar: React.FC = () => {
       <div className={styles.rightGroup}>
         <Button
           type="primary"
-          className={styles.reactButton + ' ' + styles.button}
-          onClick={exportToReactCode}
+          icon={<ExportOutlined />}
+          className={styles.button}
+          onClick={() => setExportModalOpen(true)}
         >
-          导出React
-        </Button>
-        <Button
-          type="default"
-          className={styles.htmlButton + ' ' + styles.button}
-          onClick={exportToHTML}
-        >
-          导出HTML
-        </Button>
-        <Button className={styles.button} onClick={exportToJSON}>
-          导出JSON
+          导出代码
         </Button>
         <Button className={styles.button} onClick={clearCanvas}>
           清空
         </Button>
       </div>
+
+      {/* 导出预览弹窗 */}
+      <ExportModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+      />
     </div>
   );
 };

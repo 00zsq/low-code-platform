@@ -218,7 +218,7 @@ const PropertyPanel: React.FC = () => {
       </div>
 
       <Button style={{ marginRight: 8 }} onClick={openDuplicate}>
-        复制并修改
+        修改数据
       </Button>
       <Button
         danger
@@ -228,7 +228,7 @@ const PropertyPanel: React.FC = () => {
         删除组件
       </Button>
 
-      {/* 复制并修改弹窗（解耦） */}
+      {/* 修改数据弹窗（解耦） */}
       <DuplicateModal
         open={isDupOpen}
         selectedComponent={selectedComponent}

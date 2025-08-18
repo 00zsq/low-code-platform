@@ -8,6 +8,8 @@ import DivRenderer from './items/DivRenderer';
 import FlexContainerRenderer from './items/FlexContainerRenderer';
 import CustomTableRenderer from './items/CustomTableRenderer';
 import BarChartRenderer from './items/BarChartRenderer';
+import CustomButtonRenderer from './items/CustomButtonRenderer';
+import CustomInputRenderer from './items/CustomInputRenderer';
 
 // 组件映射
 const componentMap: Record<string, React.FC<{ props: ComponentProps }>> = {
@@ -17,6 +19,8 @@ const componentMap: Record<string, React.FC<{ props: ComponentProps }>> = {
   FlexContainer: FlexContainerRenderer,
   CustomTable: CustomTableRenderer,
   BarChart: BarChartRenderer,
+  CustomButton: CustomButtonRenderer,
+  CustomInput: CustomInputRenderer,
 };
 
 // 渲染组件

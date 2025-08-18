@@ -1,0 +1,62 @@
+.code-container {
+  height: 400px;
+  overflow: auto;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background-color: #fafafa;
+}
+
+.code-content {
+  margin: 0;
+  padding: 16px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: transparent;
+  color: #333;
+}
+
+.code-content code {
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* 语法高亮样式 */
+.code-content {
+  background: #f6f8fa;
+}
+
+.code-content .keyword {
+  color: #d73a49;
+  font-weight: bold;
+}
+
+.code-content .string {
+  color: #032f62;
+}
+
+.code-content .comment {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.code-content .function {
+  color: #6f42c1;
+}
+
+.code-content .tag {
+  color: #22863a;
+}
+
+.code-content .attr-name {
+  color: #005cc5;
+}
+
+.code-content .attr-value {
+  color: #032f62;
+}

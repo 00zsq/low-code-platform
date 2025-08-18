@@ -14,7 +14,7 @@ const DuplicateModal: React.FC<DuplicateModalProps> = ({
   selectedComponent,
   onClose,
 }) => {
-  const { duplicateComponent } = useEditorStore();
+  const { updateComponent } = useEditorStore();
 
   // local states for different component types
   const [dupJson, setDupJson] = React.useState<string>('{}');
@@ -75,7 +75,7 @@ const DuplicateModal: React.FC<DuplicateModalProps> = ({
           ...selectedComponent.props,
           dataJson: JSON.stringify(data),
         };
-        duplicateComponent(selectedComponent.id, { props: nextProps });
+        updateComponent(selectedComponent.id, { props: nextProps });
       } else if (selectedComponent.type === 'CustomTable') {
         const titles = JSON.parse(dupTableColsText || '[]') as string[];
         const matrix = JSON.parse(dupTableDataText || '[]') as Array<unknown[]>;
@@ -95,7 +95,7 @@ const DuplicateModal: React.FC<DuplicateModalProps> = ({
           columnsJson: JSON.stringify(columns),
           dataJson: JSON.stringify(data),
         };
-        duplicateComponent(selectedComponent.id, { props: nextProps });
+        updateComponent(selectedComponent.id, { props: nextProps });
       } else {
         const parsedProps = JSON.parse(dupJson) as Record<string, unknown>;
         if (
@@ -118,7 +118,7 @@ const DuplicateModal: React.FC<DuplicateModalProps> = ({
           );
           delete (parsedProps as Record<string, unknown>).data;
         }
-        duplicateComponent(selectedComponent.id, { props: parsedProps });
+        updateComponent(selectedComponent.id, { props: parsedProps });
       }
       onClose();
     } catch {
@@ -129,7 +129,7 @@ const DuplicateModal: React.FC<DuplicateModalProps> = ({
   return (
     <Modal
       open={open}
-      title="复制并修改"
+      title="修改数据"
       onCancel={onClose}
       onOk={handleOk}
       okText="确定"
