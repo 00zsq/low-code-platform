@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import qiankun from 'vite-plugin-qiankun';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    qiankun('low-code-app', {
+      useDevMode: true
+    })
+  ],
   server: {
     port: 3001,
     cors: true,
@@ -14,27 +20,9 @@ export default defineConfig({
     },
   },
   base: '/',
-  build: {
-    target: 'esnext',
-    minify: false,
-    cssCodeSplit: false,
-    rollupOptions: {
-      external: [],
-      output: {
-        format: 'system',
-        entryFileNames: 'js/[name].[hash].js',
-        chunkFileNames: 'js/[name].[hash].js',
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name?.endsWith('.css')) {
-            return 'css/[name].[hash].[ext]';
-          }
-          return 'assets/[name].[hash].[ext]';
-        },
-      },
-    },
-  },
   define: {
     __DEV__: JSON.stringify(true),
     'process.env.NODE_ENV': JSON.stringify('development'),
+    global: 'globalThis',
   },
 });
