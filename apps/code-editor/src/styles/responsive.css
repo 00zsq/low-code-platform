@@ -1,0 +1,83 @@
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .topbar {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .left-controls,
+  .right-controls {
+    gap: 8px;
+  }
+
+  .device-frame {
+    margin: 10px;
+    transform: scale(0.8);
+  }
+
+  .preview-root {
+    padding: 10px;
+  }
+
+  .preview-loading .loading-content {
+    margin: 16px;
+    padding: 24px;
+  }
+
+  .preview-loading .loading-content span {
+    font-size: 13px;
+  }
+
+  .error-content {
+    margin: 16px;
+    padding: 20px;
+  }
+
+  .error-content h4 {
+    font-size: 15px;
+  }
+
+  .error-content pre {
+    font-size: 12px;
+    max-height: 150px;
+  }
+}
+
+/* 提高可访问性的媒体查询 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition: none;
+    --transition-fast: none;
+  }
+
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *:before,
+  .theme-transition *:after {
+    transition: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  :root {
+    --border: #000000;
+    --text: #000000;
+    --bg: #ffffff;
+  }
+
+  [data-theme='dark'] {
+    --border: #ffffff;
+    --text: #ffffff;
+    --bg: #000000;
+  }
+}

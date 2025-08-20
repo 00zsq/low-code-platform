@@ -1,7 +1,10 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './styles.css';
-import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import './styles/index.css';
+import {
+  renderWithQiankun,
+  qiankunWindow,
+} from 'vite-plugin-qiankun/dist/helper';
 
 interface QiankunProps {
   container?: Element;
@@ -12,17 +15,23 @@ let root: ReturnType<typeof createRoot> | null = null;
 
 function render(props: QiankunProps = {}) {
   const { container } = props;
-  const domElement = container ? container.querySelector('#root') : document.getElementById('root');
-  
+  const domElement = container
+    ? container.querySelector('#root')
+    : document.getElementById('root');
+
   if (!domElement) {
     console.error('无法找到渲染容器');
     return;
   }
 
+  // 确保主题在应用挂载前正确设置
+  const savedTheme = localStorage.getItem('code-editor-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
   if (!root) {
     root = createRoot(domElement as HTMLElement);
   }
-  
+
   root.render(<App />);
 }
 

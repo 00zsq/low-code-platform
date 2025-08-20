@@ -1,0 +1,67 @@
+/* 主工作区布局 - 参考低代码应用的简洁布局 */
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.split {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.pane {
+  overflow: hidden;
+}
+
+.pane.left {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.pane.right {
+  background: var(--bg-secondary);
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 分隔条 */
+.resizer {
+  width: 8px;
+  background: var(--border);
+  cursor: col-resize;
+  position: relative;
+  transition: var(--transition-fast);
+  z-index: 5;
+}
+
+.resizer:hover {
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+.resizer::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 40px;
+  background: var(--text-muted);
+  border-radius: 2px;
+  opacity: 0.5;
+  transition: var(--transition-fast);
+}
+
+.resizer:hover::before {
+  background: white;
+  opacity: 0.8;
+}

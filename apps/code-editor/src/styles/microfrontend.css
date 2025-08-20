@@ -1,0 +1,13 @@
+/* 微前端适配样式 - 简化版本 */
+
+/* 微前端环境下的高度适配 */
+#code-editor-container .app-root {
+  height: 100% !important;
+  min-height: 0;
+  max-height: none;
+}
+
+/* 确保在shell容器中正确显示 */
+.app-container .app-root {
+  height: 100% !important;
+}

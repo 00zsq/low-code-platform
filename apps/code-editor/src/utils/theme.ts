@@ -7,7 +7,10 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(THEME_KEY) as Theme;
-      return saved || 'dark';
+      const initialTheme = saved || 'dark';
+      // 立即设置DOM属性，确保一致性
+      document.documentElement.setAttribute('data-theme', initialTheme);
+      return initialTheme;
     }
     return 'dark';
   });
@@ -22,7 +25,7 @@ export function useTheme() {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    
+
     // 立即更新DOM，确保其他组件能感知到变化
     if (typeof window !== 'undefined') {
       localStorage.setItem(THEME_KEY, newTheme);
@@ -31,4 +34,4 @@ export function useTheme() {
   };
 
   return { theme, toggleTheme };
-} 
+}

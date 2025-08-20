@@ -5,10 +5,53 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   width: 100%;
   height: 100%;
   overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* 低代码应用特定的滚动条样式 - 限定在特定容器内 */
+.ant-layout::-webkit-scrollbar,
+.ant-layout *::-webkit-scrollbar,
+.canvas::-webkit-scrollbar,
+.materialPanel::-webkit-scrollbar,
+.propertyPanel::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ant-layout::-webkit-scrollbar-track,
+.ant-layout *::-webkit-scrollbar-track,
+.canvas::-webkit-scrollbar-track,
+.materialPanel::-webkit-scrollbar-track,
+.propertyPanel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.ant-layout::-webkit-scrollbar-thumb,
+.ant-layout *::-webkit-scrollbar-thumb,
+.canvas::-webkit-scrollbar-thumb,
+.materialPanel::-webkit-scrollbar-thumb,
+.propertyPanel::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.ant-layout::-webkit-scrollbar-thumb:hover,
+.ant-layout *::-webkit-scrollbar-thumb:hover,
+.canvas::-webkit-scrollbar-thumb:hover,
+.materialPanel::-webkit-scrollbar-thumb:hover,
+.propertyPanel::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }

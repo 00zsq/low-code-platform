@@ -17,7 +17,17 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
   const monacoRef = useRef<Monaco | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return document.documentElement.getAttribute('data-theme') || 'dark';
+    // 使用localStorage作为第一优先级，确保主题一致性
+    const savedTheme = localStorage.getItem('code-editor-theme');
+    const domTheme = document.documentElement.getAttribute('data-theme');
+    const theme = savedTheme || domTheme || 'dark';
+
+    // 确保DOM和state同步
+    if (domTheme !== theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    return theme;
   });
 
   const monacoLanguage = language === 'json' ? 'json' : 'typescript';
@@ -25,11 +35,12 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
   // 优化的主题更新：直接更新Monaco主题而不重建编辑器
   useEffect(() => {
     const checkTheme = () => {
-      const domTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      
+      const domTheme =
+        document.documentElement.getAttribute('data-theme') || 'dark';
+
       if (domTheme !== currentTheme) {
         setCurrentTheme(domTheme);
-        
+
         // 如果编辑器已准备好，直接更新主题
         if (isEditorReady && monacoRef.current && editorRef.current) {
           const monacoTheme = domTheme === 'light' ? 'vs' : 'vs-dark';
@@ -44,7 +55,10 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
     // 监听DOM变化
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+        if (
+          mutation.type === 'attributes' &&
+          mutation.attributeName === 'data-theme'
+        ) {
           checkTheme();
         }
       });
@@ -52,7 +66,7 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme']
+      attributeFilter: ['data-theme'],
     });
 
     return () => {
@@ -60,74 +74,84 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
     };
   }, [currentTheme, isEditorReady]);
 
-  const beforeMount = useCallback((monaco: Monaco) => {
-    monacoRef.current = monaco;
-    const monacoTheme = currentTheme === 'light' ? 'vs' : 'vs-dark';
-    
-    // 设置主题
-    monaco.editor.setTheme(monacoTheme);
-    
-    // 全局类型补充：声明 React/ReactDOM 为全局
-    const reactGlobals = [
-      'declare const React: any;',
-      'declare const ReactDOM: any;',
-      "declare module 'react/jsx-runtime' { const anyExport: any; export = anyExport }",
-      "declare module 'react/jsx-dev-runtime' { const anyExport: any; export = anyExport }",
-    ].join('\n');
-    
-    try {
-      monaco.languages.typescript.typescriptDefaults.addExtraLib(
-        reactGlobals,
-        'file:///global-react.d.ts'
-      );
-      monaco.languages.typescript.javascriptDefaults.addExtraLib(
-        reactGlobals,
-        'file:///global-react.d.ts'
-      );
+  const beforeMount = useCallback(
+    (monaco: Monaco) => {
+      monacoRef.current = monaco;
+      const monacoTheme = currentTheme === 'light' ? 'vs' : 'vs-dark';
 
-      const compilerOptions = {
-        target: monaco.languages.typescript.ScriptTarget.ES2020,
-        jsx: monaco.languages.typescript.JsxEmit.React,
-        allowJs: true,
-        allowNonTsExtensions: true,
-        moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-        esModuleInterop: true,
-        skipLibCheck: true,
-        noEmit: true,
-      };
-      
-      monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-        compilerOptions
-      );
-      monaco.languages.typescript.javascriptDefaults.setCompilerOptions(
-        compilerOptions as any
-      );
+      // 设置主题
+      monaco.editor.setTheme(monacoTheme);
 
-      monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-        noSemanticValidation: false,
-        noSyntaxValidation: false,
-      });
-      monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-        noSemanticValidation: false,
-        noSyntaxValidation: false,
-      });
-    } catch (error) {
-      console.warn('Monaco setup error:', error);
-    }
-  }, [currentTheme]);
+      // 全局类型补充：声明 React/ReactDOM 为全局
+      const reactGlobals = [
+        'declare const React: any;',
+        'declare const ReactDOM: any;',
+        "declare module 'react/jsx-runtime' { const anyExport: any; export = anyExport }",
+        "declare module 'react/jsx-dev-runtime' { const anyExport: any; export = anyExport }",
+      ].join('\n');
 
-  const onMount = useCallback((editor: any, monaco: Monaco) => {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-    setIsEditorReady(true);
-    
-    const monacoTheme = currentTheme === 'light' ? 'vs' : 'vs-dark';
-    monaco.editor.setTheme(monacoTheme);
-  }, [currentTheme]);
+      try {
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(
+          reactGlobals,
+          'file:///global-react.d.ts'
+        );
+        monaco.languages.typescript.javascriptDefaults.addExtraLib(
+          reactGlobals,
+          'file:///global-react.d.ts'
+        );
 
-  const handleChange = useCallback((val: string | undefined) => {
-    onChange(val || '');
-  }, [onChange]);
+        const compilerOptions = {
+          target: monaco.languages.typescript.ScriptTarget.ES2020,
+          jsx: monaco.languages.typescript.JsxEmit.React,
+          allowJs: true,
+          allowNonTsExtensions: true,
+          moduleResolution:
+            monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+          esModuleInterop: true,
+          skipLibCheck: true,
+          noEmit: true,
+        };
+
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+          compilerOptions
+        );
+        monaco.languages.typescript.javascriptDefaults.setCompilerOptions(
+          compilerOptions as any
+        );
+
+        monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+          noSemanticValidation: false,
+          noSyntaxValidation: false,
+        });
+        monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+          noSemanticValidation: false,
+          noSyntaxValidation: false,
+        });
+      } catch (error) {
+        console.warn('Monaco setup error:', error);
+      }
+    },
+    [currentTheme]
+  );
+
+  const onMount = useCallback(
+    (editor: any, monaco: Monaco) => {
+      editorRef.current = editor;
+      monacoRef.current = monaco;
+      setIsEditorReady(true);
+
+      const monacoTheme = currentTheme === 'light' ? 'vs' : 'vs-dark';
+      monaco.editor.setTheme(monacoTheme);
+    },
+    [currentTheme]
+  );
+
+  const handleChange = useCallback(
+    (val: string | undefined) => {
+      onChange(val || '');
+    },
+    [onChange]
+  );
 
   return (
     <div className="editor-wrapper">
@@ -185,4 +209,4 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
       />
     </div>
   );
-} 
+}

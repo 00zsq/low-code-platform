@@ -1,0 +1,53 @@
+/* Monaco Editor 和编辑器区域样式 */
+.editor-wrapper {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+/* 编辑器加载状态 */
+.editor-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--panel);
+  color: var(--text-muted);
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-content span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

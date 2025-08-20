@@ -30,7 +30,7 @@ const AppContent: React.FC = () => {
           container: '#low-code-container',
           props: {},
           sandbox: {
-            strictStyleIsolation: false,
+            strictStyleIsolation: true,
             experimentalStyleIsolation: false,
             excludeAssetFilter: (assetUrl: string) => {
               // 排除 Vite 的 HMR 相关资源
@@ -45,7 +45,7 @@ const AppContent: React.FC = () => {
             // 保护DnD相关的全局变量
             patchers: {
               dynamicAppend: false,
-            }
+            },
           },
         } as any);
 
@@ -86,7 +86,7 @@ const AppContent: React.FC = () => {
             },
             patchers: {
               dynamicAppend: false,
-            }
+            },
           },
         } as any);
 
