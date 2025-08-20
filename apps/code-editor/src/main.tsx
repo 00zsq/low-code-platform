@@ -5,31 +5,47 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 
 interface QiankunProps {
   container?: Element;
-  [key: string]: any;
+  [key: string]: unknown;
 }
+
+let root: ReturnType<typeof createRoot> | null = null;
 
 function render(props: QiankunProps = {}) {
   const { container } = props;
-  const rootElement = container ? container.querySelector('#root') : document.getElementById('root');
+  const domElement = container ? container.querySelector('#root') : document.getElementById('root');
   
-  if (rootElement) {
-    const root = createRoot(rootElement);
-    root.render(<App />);
+  if (!domElement) {
+    console.error('无法找到渲染容器');
+    return;
+  }
+
+  if (!root) {
+    root = createRoot(domElement as HTMLElement);
+  }
+  
+  root.render(<App />);
+}
+
+function unmount() {
+  if (root) {
+    root.unmount();
+    root = null;
   }
 }
 
 renderWithQiankun({
-  mount(props) {
-    console.log('代码编辑器应用挂载', props);
-    render(props);
-  },
   bootstrap() {
     console.log('代码编辑器应用启动');
   },
-  unmount(props) {
-    console.log('代码编辑器应用卸载', props);
+  mount(props: QiankunProps) {
+    console.log('代码编辑器应用挂载', props);
+    render(props);
   },
-  update(props) {
+  unmount(props: QiankunProps) {
+    console.log('代码编辑器应用卸载', props);
+    unmount();
+  },
+  update(props: QiankunProps) {
     console.log('代码编辑器应用更新', props);
   },
 });

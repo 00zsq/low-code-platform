@@ -20,9 +20,20 @@ export default defineConfig({
     },
   },
   base: '/',
+  build: {
+    rollupOptions: {
+      external: [],
+      output: {
+        manualChunks: undefined
+      }
+    }
+  },
   define: {
     global: 'globalThis',
     __DEV__: JSON.stringify(true),
     'process.env.NODE_ENV': JSON.stringify('development'),
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom']
   }
 })

@@ -38,9 +38,14 @@ const AppContent: React.FC = () => {
                 assetUrl.includes('/@vite/') ||
                 assetUrl.includes('/@react-refresh') ||
                 assetUrl.includes('?import') ||
-                assetUrl.includes('?t=')
+                assetUrl.includes('?t=') ||
+                assetUrl.includes('undefined')
               );
             },
+            // 保护DnD相关的全局变量
+            patchers: {
+              dynamicAppend: false,
+            }
           },
         } as any);
 
@@ -75,9 +80,13 @@ const AppContent: React.FC = () => {
                 assetUrl.includes('/@vite/') ||
                 assetUrl.includes('/@react-refresh') ||
                 assetUrl.includes('?import') ||
-                assetUrl.includes('?t=')
+                assetUrl.includes('?t=') ||
+                assetUrl.includes('undefined')
               );
             },
+            patchers: {
+              dynamicAppend: false,
+            }
           },
         } as any);
 
