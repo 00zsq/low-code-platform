@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import type { Monaco } from '@monaco-editor/react';
 import type { Language } from '../../types';
-import { useTheme } from '../../utils/theme';
 
 export interface CodeEditorProps {
   language: Language;
@@ -12,7 +11,6 @@ export interface CodeEditorProps {
 
 export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
   const { language, value, onChange } = props;
-  const { theme } = useTheme();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
@@ -170,7 +168,7 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
           minimap: { enabled: false },
           automaticLayout: true,
           scrollBeyondLastLine: false,
-          padding: { top: 12, bottom: 12 },
+          padding: { top: 12, bottom: 50 },
           suggestOnTriggerCharacters: true,
           quickSuggestions: true,
           contextmenu: true,

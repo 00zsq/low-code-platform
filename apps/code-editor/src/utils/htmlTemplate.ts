@@ -45,9 +45,12 @@ export function generateReactPreviewHtml(code: string): string {
     <div id="root">
       <div class="loading">等待代码加载...</div>
     </div>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone@7.25.0/babel.min.js"></script>
+    
+    <!-- 使用国内CDN源 -->
+    <script crossorigin src="https://cdn.bootcdn.net/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdn.bootcdn.net/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/babel-standalone/7.25.0/babel.min.js"></script>
+    
     <script>
       // 热更新系统
       let currentRoot = null;
@@ -60,146 +63,83 @@ export function generateReactPreviewHtml(code: string): string {
           currentRoot = ReactDOM.createRoot(rootElement);
           isInitialized = true;
         }
+        return currentRoot;
       }
-      
-      // 安全地编译和执行代码
-      function executeCode(code) {
+
+      // 渲染组件
+      function renderComponent(jsxCode) {
         try {
-          if (!code || code.trim() === '') {
-            renderEmptyState();
+          if (!jsxCode || jsxCode.trim() === '') {
+            const root = initializeRoot();
+            root.render(React.createElement('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: '#999',
+                fontSize: '16px'
+              }
+            }, '暂无代码'));
             return;
           }
-          
-          // 使用Babel转译代码，添加必需的filename参数
-          const transformedCode = Babel.transform(code, {
-            filename: 'preview.tsx',
-            presets: [
-              ['react', { runtime: 'classic' }],
-              ['typescript', { allowNamespaces: true }]
-            ],
-            plugins: [],
-            // 添加其他必要的配置
-            parserOpts: {
-              strictMode: false,
-              allowImportExportEverywhere: true,
-              allowReturnOutsideFunction: true
-            }
+
+          // 使用Babel转换JSX
+          const transformedCode = Babel.transform(jsxCode, {
+            presets: ['react'],
+            plugins: []
           }).code;
-          
-          // 创建一个隔离的执行环境，避免变量声明冲突
-          const AppComponent = (function() {
-            try {
-              // 在独立作用域中执行转译后的代码
-              const executionFunction = new Function(\`
-                // 执行用户代码
-                \${transformedCode}
-                
-                // 尝试获取组件的多种方式
-                if (typeof App !== 'undefined') return App;
-                if (typeof Component !== 'undefined') return Component;
-                if (typeof exports !== 'undefined' && exports.default) return exports.default;
-                if (typeof module !== 'undefined' && module.exports) return module.exports;
-                
-                // 如果都没找到，返回null
-                return null;
-              \`);
-              
-              return executionFunction();
-            } catch (err) {
-              console.error('Execution error:', err);
-              throw err;
-            }
-          })();
-          
-          if (typeof AppComponent === 'function') {
-            renderComponent(AppComponent);
-          } else {
-            renderError('未检测到有效的 App 组件\\n\\n请确保代码中定义了组件：\\n\\nfunction App() {\\n  return <div>Hello World</div>;\\n}\\n\\n或\\n\\nconst App = () => {\\n  return <div>Hello World</div>;\\n};');
-          }
-          
-        } catch (err) {
-          console.error('Code execution error:', err);
-          const errorMessage = err.name === 'SyntaxError' ? 
-            \`语法错误: \${err.message}\` :
-            err.message || String(err);
-          renderError(errorMessage);
-          
-          // 通知父窗口有错误
-          if (window.parent !== window) {
-            window.parent.postMessage({
-              type: 'PREVIEW_ERROR',
-              error: err.message || String(err)
-            }, '*');
-          }
+
+          // 创建函数并执行
+          const componentFunction = new Function('React', 'ReactDOM', 
+            'const { createElement: h, Component, useState, useEffect, useRef, useMemo, useCallback, Fragment } = React;' +
+            transformedCode +
+            'return typeof App !== "undefined" ? App : (() => React.createElement("div", {}, "组件渲染失败"));'
+          );
+
+          const ComponentToRender = componentFunction(
+            React, ReactDOM
+          );
+
+          const root = initializeRoot();
+          root.render(React.createElement(ComponentToRender));
+        } catch (error) {
+          renderError('渲染错误: ' + error.message);
         }
       }
-      
-      // 渲染React组件
-      function renderComponent(Component) {
-        initializeRoot();
-        try {
-          currentRoot.render(React.createElement(Component));
-        } catch (err) {
-          console.error('Render error:', err);
-          renderError('渲染错误: ' + (err.message || String(err)));
-        }
-      }
-      
-      // 渲染错误信息
-      function renderError(errorMessage) {
-        initializeRoot();
-        const errorElement = React.createElement('div', {
+
+      // 渲染错误
+      function renderError(message) {
+        const root = initializeRoot();
+        root.render(React.createElement('div', {
           className: 'error'
-        }, errorMessage);
-        currentRoot.render(errorElement);
+        }, message));
       }
-      
-      // 渲染空状态
-      function renderEmptyState() {
-        initializeRoot();
-        const emptyElement = React.createElement('div', {
-          className: 'loading'
-        }, '请在编辑器中输入React代码...');
-        currentRoot.render(emptyElement);
-      }
-      
+
       // 监听来自父窗口的消息
-      window.addEventListener('message', function(event) {
-        if (event.data && event.data.type === 'CODE_UPDATE') {
-          executeCode(event.data.code);
+      window.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'updateCode') {
+          renderComponent(event.data.code);
+        }
+      }, false);
+
+      // 等待所有脚本加载完成
+      window.addEventListener('load', () => {
+        // 通知父窗口已准备好
+        if (window.parent) {
+          window.parent.postMessage({ type: 'iframeReady' }, '*');
         }
       });
-      
-      // 页面加载完成后的初始化
-      document.addEventListener('DOMContentLoaded', function() {
-        initializeRoot();
-        
-        // 如果有初始代码，执行它
-        const initialCode = \`${safeCode}\`;
-        if (initialCode.trim()) {
-          executeCode(initialCode);
-        } else {
-          renderEmptyState();
-        }
-        
-        // 通知父窗口页面已准备就绪
-        if (window.parent !== window) {
-          window.parent.postMessage({
-            type: 'PREVIEW_READY'
-          }, '*');
-        }
-      });
-      
+
       // 全局错误处理
-      window.addEventListener('error', function(event) {
+      window.addEventListener('error', (event) => {
         console.error('Global error:', event.error);
-        renderError('运行时错误: ' + (event.error?.message || event.message || '未知错误'));
+        renderError('运行时错误: ' + (event.error?.message || event.message));
       });
-      
-      // Promise 错误处理
-      window.addEventListener('unhandledrejection', function(event) {
+
+      window.addEventListener('unhandledrejection', (event) => {
         console.error('Unhandled promise rejection:', event.reason);
-        renderError('Promise错误: ' + (event.reason?.message || String(event.reason)));
+        renderError('Promise错误: ' + (event.reason?.message || event.reason));
       });
     </script>
   </body>

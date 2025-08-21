@@ -40,20 +40,7 @@
     0 10px 10px -5px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-.device-notch {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 12px;
-  background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
-  border: 1px solid #333;
-}
 
-[data-theme='light'] .device-notch {
-  background: linear-gradient(145deg, #999, #777);
-  border-color: #666;
-}
 
 .device-screen {
   background: #ffffff;
@@ -82,13 +69,6 @@
 /* 横屏模式的特殊样式 */
 .device-frame.landscape {
   /* 横屏时可以添加特殊样式 */
-}
-
-.device-frame.landscape .device-notch {
-  /* 横屏时刘海的位置调整 */
-  top: 8px;
-  left: 8px;
-  transform: none;
 }
 
 /* JSON 预览美化 */

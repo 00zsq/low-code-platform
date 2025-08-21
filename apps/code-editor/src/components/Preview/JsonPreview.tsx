@@ -1,325 +1,446 @@
-import React, { useState } from 'react';
-import type { LowCodeSchema, LowCodeNode } from '../../types';
-import { safeEvalFunction } from '../../utils/safeEval';
+import React, { useState, useEffect, useRef } from 'react';
+import type { LowCodeSchema } from '../../types';
 
 interface JsonPreviewProps {
   code: string;
 }
 
-// 简化的组件渲染器，只支持基本组件预览
-function SimpleRenderer({ schema }: { schema: LowCodeSchema }): React.ReactElement {
-  const [state, setState] = useState<Record<string, any>>({});
+// 低代码组件渲染器 - 100%还原低代码平台效果
+function LowCodeRenderer({ schema }: { schema: LowCodeSchema }): React.ReactElement {
+  const [scale, setScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const renderNode = (node: LowCodeNode): React.ReactNode => {
-    const { type, props = {}, children = [] } = node;
-    const commonProps: any = {};
-    if (props.style && typeof props.style === 'object')
-      commonProps.style = props.style;
-    if (props.className) commonProps.className = props.className;
+  // 获取画布实际尺寸
+  const canvasWidth = (schema as any).style?.width || 1200;
+  const canvasHeight = (schema as any).style?.height || 740;
+  const canvasBackground = (schema as any).style?.backgroundColor || '#ffffff';
+
+  // 动态计算缩放比例
+  useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        // 减去padding和一些边距
+        const availableWidth = containerRect.width - 22; // 10px padding + 1px border * 2
+        const availableHeight = containerRect.height - 22;
+        
+        if (availableWidth > 0 && availableHeight > 0) {
+          const scaleX = availableWidth / canvasWidth;
+          const scaleY = availableHeight / canvasHeight;
+          const newScale = Math.min(scaleX, scaleY, 1); // 最大不超过1
+          
+          setScale(newScale);
+        }
+      }
+    };
+
+    // 延迟执行，确保DOM已渲染
+    const timer = setTimeout(updateScale, 100);
+    
+    window.addEventListener('resize', updateScale);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateScale);
+    };
+  }, [canvasWidth, canvasHeight]);
+
+  // 缩放后的实际显示尺寸
+  const scaledWidth = canvasWidth * scale;
+  const scaledHeight = canvasHeight * scale;
+
+  // 画布样式
+  const canvasStyle: React.CSSProperties = {
+    position: 'relative',
+    width: `${canvasWidth}px`,
+    height: `${canvasHeight}px`,
+    backgroundColor: canvasBackground,
+    transformOrigin: 'top left',
+    transform: `scale(${scale})`,
+  };
+
+  // 渲染单个组件内容（不包含定位）
+  const renderComponentContent = (component: any): React.ReactNode => {
+    const { type, props = {} } = component;
 
     switch (type) {
-      case 'Text':
-        return (
-          <span 
-            {...commonProps} 
-            style={{ 
-              fontSize: 14, 
-              color: 'var(--text)',
-              padding: '4px 8px',
-              background: 'var(--bg-secondary)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border)',
-              display: 'inline-block',
-              margin: '2px',
-              ...commonProps.style 
-            }}
-          >
-            {props.content || props.children || '文本'}
-          </span>
-        );
-      
-      case 'Button':
+      case 'Text': {
+        const { content, fontSize, color, textAlign, type: textType } = props;
+        const style: React.CSSProperties = {
+          fontSize: fontSize || 16,
+          color: color || '#000000',
+          textAlign: textAlign || 'left',
+          margin: 0,
+          padding: 0,
+        };
+
+        // 根据文本类型选择对应的标签
+        switch (textType) {
+          case 'h1':
+            return <h1 style={style}>{content || '标题1'}</h1>;
+          case 'h2':
+            return <h2 style={style}>{content || '标题2'}</h2>;
+          case 'h3':
+            return <h3 style={style}>{content || '标题3'}</h3>;
+          case 'p':
+            return <p style={style}>{content || '段落'}</p>;
+          case 'strong':
+            return <strong style={style}>{content || '粗体文本'}</strong>;
+          case 'em':
+            return <em style={style}>{content || '斜体文本'}</em>;
+          default:
+            return <span style={style}>{content || '文本'}</span>;
+        }
+      }
+
       case 'CustomButton': {
-        const onClick = safeEvalFunction(props.onClick);
+        const {
+          text = '按钮',
+          buttonType = 'primary',
+          disabled = false,
+          backgroundColor,
+          textColor,
+          borderColor,
+          borderRadius = '6px',
+          fontSize = '14px',
+        } = props;
+
+        // 根据按钮类型设置样式
+        const getThemeStyles = () => {
+          switch (buttonType) {
+            case 'primary':
+              return {
+                backgroundColor: backgroundColor || '#1677ff',
+                color: textColor || '#ffffff',
+                border: `1px solid ${borderColor || '#1677ff'}`,
+              };
+            case 'danger':
+              return {
+                backgroundColor: backgroundColor || '#ff4d4f',
+                color: textColor || '#ffffff',
+                border: `1px solid ${borderColor || '#ff4d4f'}`,
+              };
+            case 'success':
+              return {
+                backgroundColor: backgroundColor || '#52c41a',
+                color: textColor || '#ffffff',
+                border: `1px solid ${borderColor || '#52c41a'}`,
+              };
+            case 'warning':
+              return {
+                backgroundColor: backgroundColor || '#faad14',
+                color: textColor || '#ffffff',
+                border: `1px solid ${borderColor || '#faad14'}`,
+              };
+            case 'ghost':
+              return {
+                backgroundColor: 'transparent',
+                color: textColor || '#1677ff',
+                border: `1px solid ${borderColor || '#1677ff'}`,
+              };
+            default:
+              return {
+                backgroundColor: backgroundColor || '#ffffff',
+                color: textColor || '#000000',
+                border: `1px solid ${borderColor || '#d9d9d9'}`,
+              };
+          }
+        };
+
+        const themeStyles = getThemeStyles();
+        const buttonStyle: React.CSSProperties = {
+          width: '100%',
+          height: '100%',
+          fontSize: fontSize,
+          borderRadius: borderRadius,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          opacity: disabled ? 0.6 : 1,
+          outline: 'none',
+          padding: '4px 12px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          transition: 'all 0.2s ease',
+          boxSizing: 'border-box',
+          whiteSpace: 'nowrap',
+          userSelect: 'none',
+          ...themeStyles,
+        };
+
         return (
-          <button
-            {...commonProps}
-            onClick={(e) => onClick?.(e, state, setState)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--primary)',
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              cursor: 'pointer',
-              margin: '4px',
-              fontWeight: 500,
-              fontSize: '13px',
-              transition: 'var(--transition)',
-              ...commonProps.style,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            {props.text || props.children || '按钮'}
+          <button style={buttonStyle} disabled={disabled}>
+            {text}
           </button>
         );
       }
-      
-      case 'Input':
-      case 'CustomInput':
+
+      case 'CustomInput': {
+        const {
+          placeholder = '请输入',
+          value = '',
+          inputType = 'text',
+          disabled = false,
+          borderRadius = '6px',
+          borderColor = '#d9d9d9',
+          backgroundColor = '#ffffff',
+          textColor = '#000000',
+          fontSize = '14px',
+        } = props;
+
+        const inputStyle: React.CSSProperties = {
+          width: '100%',
+          height: '100%',
+          padding: '4px 12px',
+          fontSize: fontSize,
+          color: textColor,
+          backgroundColor: backgroundColor,
+          border: `1px solid ${borderColor}`,
+          borderRadius: borderRadius,
+          outline: 'none',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          cursor: disabled ? 'not-allowed' : 'text',
+          opacity: disabled ? 0.6 : 1,
+          boxSizing: 'border-box',
+        };
+
         return (
           <input
-            {...commonProps}
-            type="text"
-            placeholder={props.placeholder || '请输入'}
+            type={inputType}
+            placeholder={placeholder}
+            defaultValue={value}
+            disabled={disabled}
+            style={inputStyle}
+          />
+        );
+      }
+
+      case 'Image': {
+        const { src, alt, width } = props;
+        return (
+          <img
+            src={src || 'https://via.placeholder.com/150x100/e5e7eb/6b7280?text=Image'}
+            alt={alt || '图片'}
             style={{
-              padding: '8px 12px',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              background: 'var(--panel)',
-              color: 'var(--text)',
-              margin: '4px',
-              fontSize: '14px',
-              transition: 'var(--transition)',
-              ...commonProps.style,
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--primary)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.boxShadow = 'none';
+              width: width || '150px',
+              height: 'auto',
+              display: 'block',
             }}
           />
         );
-      
-      case 'Image':
-        return (
-          <div
-            style={{
-              display: 'inline-block',
-              border: '2px dashed var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: '8px',
-              margin: '4px',
-              background: 'var(--bg-secondary)',
-              ...commonProps.style,
-            }}
-          >
-            <img
-              {...commonProps}
-              src={props.src || 'https://via.placeholder.com/120x80/3b82f6/ffffff?text=Image'}
-              alt={props.alt || '图片'}
-              style={{
-                maxWidth: '120px',
-                height: 'auto',
-                borderRadius: 'var(--radius-sm)',
-                display: 'block',
-              }}
-            />
-          </div>
-        );
-      
-      case 'Div':
-      case 'Container':
-      case 'View':
-        return (
-          <div
-            {...commonProps}
-            style={{
-              padding: '12px',
-              border: '2px dashed var(--border)',
-              borderRadius: 'var(--radius)',
-              backgroundColor: 'var(--bg-secondary)',
-              minHeight: '60px',
-              margin: '8px 4px',
-              position: 'relative',
-              ...commonProps.style,
-            }}
-          >
-            <div style={{
-              position: 'absolute',
-              top: '4px',
-              left: '8px',
-              fontSize: '10px',
-              color: 'var(--text-muted)',
-              backgroundColor: 'var(--panel)',
-              padding: '2px 6px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border)',
-            }}>
-              容器
-            </div>
-            <div style={{ marginTop: '16px' }}>
-              {props.content || (children.length > 0 ? 
-                children.map((child) => (
-                  <React.Fragment key={child.id}>
-                    {renderNode(child)}
-                  </React.Fragment>
-                )) : 
-                <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>空容器</span>
-              )}
-            </div>
-          </div>
-        );
-      
-      // 对于复杂组件，显示美化的组件占位符
-      case 'CustomTable':
-        return (
-          <div
-            {...commonProps}
-            style={{
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: '16px',
-              textAlign: 'center',
-              backgroundColor: 'var(--panel)',
-              margin: '8px 4px',
-              minWidth: '200px',
-              ...commonProps.style,
-            }}
-          >
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>📊</div>
-            <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)' }}>
-              表格组件
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              {type}
-            </div>
-          </div>
-        );
-      
-      case 'BarChart':
-        return (
-          <div
-            {...commonProps}
-            style={{
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: '16px',
-              textAlign: 'center',
-              backgroundColor: 'var(--panel)',
-              margin: '8px 4px',
-              minWidth: '200px',
-              ...commonProps.style,
-            }}
-          >
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>📈</div>
-            <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)' }}>
-              柱状图组件
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              {type}
-            </div>
-          </div>
-        );
-      
-      case 'FlexContainer':
-        return (
-          <div
-            {...commonProps}
-            style={{
-              display: 'flex',
-              flexDirection: props.direction || 'row',
-              gap: '8px',
-              padding: '12px',
-              border: '2px dashed var(--primary)',
-              borderRadius: 'var(--radius)',
-              backgroundColor: 'rgba(59, 130, 246, 0.05)',
-              margin: '8px 4px',
-              position: 'relative',
-              minHeight: '80px',
-              ...commonProps.style,
-            }}
-          >
-            <div style={{
-              position: 'absolute',
-              top: '4px',
-              left: '8px',
-              fontSize: '10px',
-              color: 'var(--primary)',
-              backgroundColor: 'var(--panel)',
-              padding: '2px 6px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--primary)',
-              fontWeight: '500',
-            }}>
-              Flex容器
-            </div>
-            <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
-              {children.length > 0 ? (
-                children.map((child) => (
-                  <React.Fragment key={child.id}>
-                    {renderNode(child)}
-                  </React.Fragment>
-                ))
-              ) : (
-                <span style={{ 
-                  color: 'var(--text-muted)', 
-                  fontSize: '12px', 
-                  fontStyle: 'italic',
-                  padding: '8px'
-                }}>
-                  可放置其他组件
-                </span>
-              )}
-            </div>
-          </div>
-        );
+      }
 
-      // Ant Design 组件
-      default:
-        if (type.startsWith('antd.')) {
-          const componentName = type.split('.')[1];
-          return (
-            <div
-              {...commonProps}
-              style={{
-                padding: '12px 16px',
-                border: '1px solid var(--primary)',
-                borderRadius: 'var(--radius)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                color: 'var(--primary)',
-                display: 'inline-block',
-                margin: '4px',
-                fontWeight: '500',
-                fontSize: '13px',
-                ...commonProps.style,
-              }}
-            >
-              <span style={{ marginRight: '6px' }}>🐜</span>
-              {componentName}
-              <div style={{ fontSize: '10px', opacity: 0.7, marginTop: '2px' }}>
-                {type}
-              </div>
+      case 'Div': {
+        const { content, backgroundColor, padding, borderRadius } = props;
+        const divStyle: React.CSSProperties = {
+          backgroundColor: backgroundColor || '#fafafa',
+          padding: padding || '12px',
+          borderRadius: borderRadius || '6px',
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box',
+        };
+        return <div style={divStyle}>{content || '容器内容'}</div>;
+      }
+
+      case 'FlexContainer': {
+        const {
+          direction = 'row',
+          justifyContent = 'flex-start',
+          alignItems = 'center',
+          gap = '8px',
+          padding = '8px',
+          backgroundColor = '#fff',
+          minHeight = '80px',
+        } = props;
+
+        const flexStyle: React.CSSProperties = {
+          display: 'flex',
+          flexDirection: direction as any,
+          justifyContent: justifyContent as any,
+          alignItems: alignItems as any,
+          gap: gap,
+          padding: padding,
+          backgroundColor: backgroundColor,
+          minHeight: minHeight,
+          width: '100%',
+          height: '100%',
+          border: '2px dashed #ccc',
+          borderRadius: '4px',
+          boxSizing: 'border-box',
+        };
+
+        return (
+          <div style={flexStyle}>
+            <div style={{ color: '#999', fontSize: 12 }}>
+              Flex容器 - 可拖入其他组件
             </div>
-          );
-        }
+          </div>
+        );
+      }
+
+      case 'CustomTable': {
+        const { bordered, columnsJson, dataJson } = props;
         
+        // 解析表格列配置和数据
+        let columns: Array<{ title: string; dataIndex: string }> = [];
+        let data: Array<Record<string, unknown>> = [];
+        
+        try {
+          columns = JSON.parse(columnsJson || '[]');
+        } catch {}
+        
+        try {
+          data = JSON.parse(dataJson || '[]');
+        } catch {}
+
+        const tableStyle: React.CSSProperties = {
+          width: '100%',
+          borderCollapse: 'collapse',
+          tableLayout: 'fixed',
+        };
+
+        const cellStyle: React.CSSProperties = {
+          border: bordered ? '1px solid #d9d9d9' : 'none',
+          padding: '6px 8px',
+          fontSize: '12px',
+        };
+
+        const wrapStyle: React.CSSProperties = {
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'stretch',
+        };
+
+        return (
+          <div style={wrapStyle}>
+            <table style={tableStyle}>
+              {columns.length > 0 && (
+                <thead>
+                  <tr>
+                    {columns.map((c, idx) => (
+                      <th
+                        key={idx}
+                        style={{
+                          ...cellStyle,
+                          background: '#fafafa',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {c.title}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+              )}
+              {data.length > 0 && (
+                <tbody>
+                  {data.map((row, idx) => (
+                    <tr key={idx}>
+                      {columns.map((c, colIdx) => (
+                        <td key={colIdx} style={cellStyle}>
+                          {String(row[c.dataIndex] ?? '')}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
+          </div>
+        );
+      }
+
+      case 'BarChart': {
+        const { barColor, dataJson } = props;
+        
+        // 解析图表数据
+        let data: Array<{ label: string; value: number }> = [];
+        try {
+          data = JSON.parse(dataJson || '[]');
+        } catch {}
+
+        const maxValue = Math.max(1, ...data.map((d) => Number(d.value) || 0));
+        
+        // 使用固定的参考尺寸进行计算
+        const referenceWidth = 400;
+        const referenceHeight = 200;
+        const gap = 8;
+        const innerPadding = 8;
+        const count = Math.max(1, data.length);
+        const availableWidth = Math.max(0, referenceWidth - innerPadding * 2 - gap * (count - 1));
+        const barWidth = Math.max(16, Math.floor(availableWidth / count));
+
+        const containerStyle: React.CSSProperties = {
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: '8px',
+          padding: '8px',
+          border: '1px solid #eee',
+          borderRadius: '6px',
+          background: '#fff',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+        };
+
+        return (
+          <div style={containerStyle}>
+            {data.map((d, idx) => {
+              const h = (Number(d.value) / maxValue) * Math.max(0, referenceHeight - innerPadding * 2 - 24);
+              
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${barWidth}px`,
+                      height: `${Math.max(2, h)}px`,
+                      background: barColor || '#1677ff',
+                      borderRadius: '4px',
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      textAlign: 'center',
+                      marginTop: '4px',
+                    }}
+                  >
+                    {d.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+
+      default:
         return (
           <div
-            {...commonProps}
             style={{
-              padding: '12px 16px',
-              border: '1px solid var(--error)',
-              borderRadius: 'var(--radius)',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              color: 'var(--error)',
-              margin: '4px',
-              fontSize: '13px',
-              fontWeight: '500',
-              ...commonProps.style,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #ff4d4f',
+              borderRadius: '6px',
+              backgroundColor: 'rgba(255, 77, 79, 0.1)',
+              color: '#ff4d4f',
+              fontSize: '12px',
             }}
           >
-            <span style={{ marginRight: '6px' }}>❓</span>
             未知组件: {type}
           </div>
         );
@@ -327,49 +448,63 @@ function SimpleRenderer({ schema }: { schema: LowCodeSchema }): React.ReactEleme
   };
 
   return (
-    <div style={{ 
-      padding: 20, 
-      background: 'var(--bg)', 
-      color: 'var(--text)', 
-      minHeight: '100%',
-      fontFamily: 'var(--font-family)',
-    }}>
-      <div style={{ 
-        marginBottom: 16, 
-        fontSize: 12, 
-        color: 'var(--text-muted)',
-        padding: '8px 12px',
-        background: 'var(--panel)',
-        borderRadius: 'var(--radius)',
-        border: '1px solid var(--border)',
+    <div 
+      ref={containerRef}
+      style={{ 
+        position: 'relative',
+        width: '100%',
+        height: '100%',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
+        justifyContent: 'center',
+        background: '#f5f5f5',
+        overflow: 'hidden',
+        padding: '10px',
+        boxSizing: 'border-box',
+        minHeight: '200px',
+      }}
+    >
+      {/* 画布容器 */}
+      <div style={{
+        position: 'relative',
+        width: `${scaledWidth}px`,
+        height: `${scaledHeight}px`,
+        border: '1px solid #d9d9d9',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        overflow: 'hidden',
+        backgroundColor: canvasBackground,
+        flexShrink: 0,
       }}>
-        <span>🔍</span>
-        JSON Schema 预览 (简化渲染) - {schema.components?.length || 0} 个组件
-      </div>
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '8px' 
-      }}>
-        {schema.components?.map((node) => (
-          <div key={node.id} style={{ 
-            animation: 'fadeIn 0.3s ease-in-out'
-          }}>
-            {renderNode(node)}
-          </div>
-        )) || (
-          <div style={{
-            textAlign: 'center',
-            padding: '40px',
-            color: 'var(--text-muted)',
-            fontSize: '14px'
-          }}>
-            没有找到组件
-          </div>
-        )}
+        <div style={canvasStyle}>
+          {schema.components?.map((component) => {
+            // 外层容器使用 component.style 的定位和尺寸
+            const containerStyle: React.CSSProperties = {
+              position: 'absolute',
+              left: (component as any).style?.left || '0px',
+              top: (component as any).style?.top || '0px',
+              width: (component as any).style?.width || 'auto',
+              height: (component as any).style?.height || 'auto',
+            };
+
+            return (
+              <div key={component.id} style={containerStyle}>
+                {renderComponentContent(component)}
+              </div>
+            );
+          }) || (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              color: '#999',
+              fontSize: '16px'
+            }}>
+              没有找到组件
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -379,7 +514,7 @@ export default function JsonPreview({ code }: JsonPreviewProps): React.ReactElem
   try {
     const data = JSON.parse(code);
     if (data && Array.isArray(data.components)) {
-      return <SimpleRenderer schema={data} />;
+      return <LowCodeRenderer schema={data} />;
     }
     // 如果不是标准 schema，就展示原始 JSON
     return (

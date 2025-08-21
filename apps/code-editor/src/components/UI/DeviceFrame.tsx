@@ -21,14 +21,6 @@ export default function DeviceFrame({ orientation, children }: DeviceFrameProps)
         transition: 'all 0.3s ease-in-out',
       }}
     >
-      <div 
-        className="device-notch" 
-        style={{
-          width: orientation === 'portrait' ? 140 : 100,
-          height: orientation === 'portrait' ? 20 : 16,
-          transition: 'all 0.3s ease-in-out',
-        }}
-      />
       <div
         className="device-screen"
         style={{ 

@@ -54,20 +54,101 @@ export const generateComponentHtml = (component: ComponentConfig) => {
   }
 
   if (type === 'CustomTable') {
-    const { width, height } = (props || {}) as Record<string, unknown>;
-    const style = serializeStyleForHtml({
-      width: toStyleValue(width),
-      height: toStyleValue(height),
-      overflow: 'auto',
+    const { bordered, columnsJson, dataJson } = (props || {}) as Record<string, unknown>;
+    
+    // 解析表格列配置和数据
+    let columns: Array<{ title: string; dataIndex: string }> = [];
+    let data: Array<Record<string, unknown>> = [];
+    
+    try {
+      columns = JSON.parse((columnsJson as string) || '[]');
+    } catch {
+      // 忽略JSON解析错误，使用默认空数组
+    }
+    
+    try {
+      data = JSON.parse((dataJson as string) || '[]');
+    } catch {
+      // 忽略JSON解析错误，使用默认空数组
+    }
+
+    const tableStyle = serializeStyleForHtml({
+      width: '100%',
+      borderCollapse: 'collapse',
+      tableLayout: 'fixed',
     });
-    return `<div style="${style}"><table style="width: 100%; border-collapse: collapse; table-layout: fixed;"></table></div>`;
+
+    const cellStyle = serializeStyleForHtml({
+      border: bordered ? '1px solid #d9d9d9' : 'none',
+      padding: '6px 8px',
+      fontSize: '12px',
+    });
+
+    const headerCellStyle = serializeStyleForHtml({
+      border: bordered ? '1px solid #d9d9d9' : 'none',
+      padding: '6px 8px',
+      fontSize: '12px',
+      background: '#fafafa',
+      textAlign: 'left',
+    });
+
+    // 内层组件填充整个外层容器
+    const wrapStyle = serializeStyleForHtml({
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'stretch',
+    });
+
+    // 生成表头
+    const thead = columns.length > 0 ? `
+        <thead>
+          <tr>
+            ${columns.map(c => `<th style="${headerCellStyle}">${c.title}</th>`).join('')}
+          </tr>
+        </thead>` : '';
+
+    // 生成表体
+    const tbody = data.length > 0 ? `
+        <tbody>
+          ${data.map(row => `
+            <tr>
+              ${columns.map(c => `<td style="${cellStyle}">${String(row[c.dataIndex] ?? '')}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>` : '';
+
+    return `<div style="${wrapStyle}"><table style="${tableStyle}">${thead}${tbody}</table></div>`;
   }
 
   if (type === 'BarChart') {
-    const { width, height } = (props || {}) as Record<string, unknown>;
-    const style = serializeStyleForHtml({
-      width: toStyleValue(width),
-      height: toStyleValue(height),
+    const { barColor, dataJson } = (props || {}) as Record<string, unknown>;
+    
+    // 解析图表数据
+    let data: Array<{ label: string; value: number }> = [];
+    try {
+      data = JSON.parse((dataJson as string) || '[]');
+    } catch {
+      // 忽略JSON解析错误，使用默认空数组
+    }
+
+    const maxValue = Math.max(1, ...data.map((d) => Number(d.value) || 0));
+    
+    // 使用固定的参考尺寸进行计算（因为容器会自动缩放）
+    const referenceWidth = 400;
+    const referenceHeight = 200;
+
+    const gap = 8;
+    const innerPadding = 8;
+    const count = Math.max(1, data.length);
+    const availableWidth = Math.max(0, referenceWidth - innerPadding * 2 - gap * (count - 1));
+    const barWidth = Math.max(16, Math.floor(availableWidth / count));
+
+    // 内层组件填充整个外层容器
+    const containerStyle = serializeStyleForHtml({
+      width: '100%',
+      height: '100%',
       display: 'flex',
       alignItems: 'flex-end',
       gap: '8px',
@@ -75,8 +156,39 @@ export const generateComponentHtml = (component: ComponentConfig) => {
       border: '1px solid #eee',
       borderRadius: '6px',
       background: '#fff',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
     });
-    return `<div style="${style}"></div>`;
+
+    // 生成柱状图HTML
+    const barsHtml = data.map((d) => {
+      const h = (Number(d.value) / maxValue) * Math.max(0, referenceHeight - innerPadding * 2 - 24);
+      const barStyle = serializeStyleForHtml({
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      });
+      const barRectStyle = serializeStyleForHtml({
+        width: `${barWidth}px`,
+        height: `${Math.max(2, h)}px`,
+        background: (barColor as string) || '#1677ff',
+        borderRadius: '4px',
+      });
+      const labelStyle = serializeStyleForHtml({
+        fontSize: '12px',
+        textAlign: 'center',
+        marginTop: '4px',
+      });
+      
+      return `
+        <div style="${barStyle}">
+          <div style="${barRectStyle}"></div>
+          <div style="${labelStyle}">${d.label}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `<div style="${containerStyle}">${barsHtml}</div>`;
   }
 
   if (type === 'CustomButton') {

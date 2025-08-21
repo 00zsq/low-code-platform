@@ -10,9 +10,9 @@ export const generateInnerJsx = (component: ComponentConfig) => {
 
   if (type === 'Text') {
     const { content, fontSize, color, textAlign, type: textType } = props;
-    const styleObj = `{ fontSize: ${fontSize ?? 16}, color: '${
+    const styleObj = `{{ fontSize: ${fontSize ?? 16}, color: '${
       color ?? '#000'
-    }', textAlign: '${textAlign ?? 'left'}' }`;
+    }', textAlign: '${textAlign ?? 'left'}' }}`;
 
     const textContent = content ?? '';
 
@@ -85,31 +85,148 @@ export const generateInnerJsx = (component: ComponentConfig) => {
   }
 
   if (type === 'CustomTable') {
-    const { width, height } = props;
-    const container = serializeStyleForJsx({
-      width: toStyleValue(width),
-      height: toStyleValue(height),
-      overflow: 'auto',
+    const { bordered, columnsJson, dataJson } = props;
+    
+    // 解析表格列配置和数据
+    let columns: Array<{ title: string; dataIndex: string }> = [];
+    let data: Array<Record<string, unknown>> = [];
+    
+    try {
+      columns = JSON.parse((columnsJson as string) || '[]');
+    } catch {
+      // 忽略JSON解析错误，使用默认空数组
+    }
+    
+    try {
+      data = JSON.parse((dataJson as string) || '[]');
+    } catch {
+      // 忽略JSON解析错误，使用默认空数组
+    }
+
+    // 内层组件填充整个外层容器
+    const containerStyle = serializeStyleForJsx({
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'stretch',
     });
-    return `<div style={{ ${container} }}><table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-      {/* 表头与数据在运行时渲染，此处保留容器与样式 */}
-    </table></div>`;
+
+    const tableStyle = serializeStyleForJsx({
+      width: '100%',
+      borderCollapse: 'collapse',
+      tableLayout: 'fixed',
+    });
+
+    const cellStyle = serializeStyleForJsx({
+      border: bordered ? '1px solid #d9d9d9' : 'none',
+      padding: '6px 8px',
+      fontSize: '12px',
+    });
+
+    const headerCellStyle = serializeStyleForJsx({
+      border: bordered ? '1px solid #d9d9d9' : 'none',
+      padding: '6px 8px',
+      fontSize: '12px',
+      background: '#fafafa',
+      textAlign: 'left',
+    });
+
+    // 生成表头JSX
+    const theadJsx = columns.length > 0 ? `
+        <thead>
+          <tr>
+            ${columns.map(c => `<th style={{ ${headerCellStyle} }}>${c.title}</th>`).join('')}
+          </tr>
+        </thead>` : '';
+
+    // 生成表体JSX
+    const tbodyJsx = data.length > 0 ? `
+        <tbody>
+          ${data.map((row, idx) => `
+            <tr key={${idx}}>
+              ${columns.map(c => `<td style={{ ${cellStyle} }}>${String(row[c.dataIndex] ?? '')}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>` : '';
+
+    return `<div style={{ ${containerStyle} }}>
+      <table style={{ ${tableStyle} }} width="100%">${theadJsx}${tbodyJsx}
+      </table>
+    </div>`;
   }
 
   if (type === 'BarChart') {
-    const { width, height } = props;
-    const c = serializeStyleForJsx({
-      width: toStyleValue(width),
-      height: toStyleValue(height),
+    const { barColor, dataJson } = props;
+    
+    // 解析图表数据
+    let data: Array<{ label: string; value: number }> = [];
+    try {
+      data = JSON.parse((dataJson as string) || '[]');
+    } catch {
+      // 忽略JSON解析错误，使用默认空数组
+    }
+
+    const maxValue = Math.max(1, ...data.map((d) => Number(d.value) || 0));
+    
+    // 使用固定的参考尺寸进行计算（因为容器会自动缩放）
+    const referenceWidth = 400;
+    const referenceHeight = 200;
+
+    const gap = 8;
+    const innerPadding = 8;
+    const count = Math.max(1, data.length);
+    const availableWidth = Math.max(0, referenceWidth - innerPadding * 2 - gap * (count - 1));
+    const barWidth = Math.max(16, Math.floor(availableWidth / count));
+
+    // 内层组件填充整个外层容器
+    const containerStyle = serializeStyleForJsx({
+      width: '100%',
+      height: '100%',
       display: 'flex',
       alignItems: 'flex-end',
-      gap: 8,
+      gap: '8px',
       padding: '8px',
       border: '1px solid #eee',
-      borderRadius: 6,
+      borderRadius: '6px',
       background: '#fff',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
     });
-    return `<div style={{ ${c} }}>{/* 柱状图导出为静态容器，数据运行时渲染 */}</div>`;
+
+    // 生成柱状图JSX
+    const barsJsx = data.map((d, idx) => {
+      const h = (Number(d.value) / maxValue) * Math.max(0, referenceHeight - innerPadding * 2 - 24);
+      
+      const barStyle = serializeStyleForJsx({
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      });
+
+      const barRectStyle = serializeStyleForJsx({
+        width: `${barWidth}px`,
+        height: `${Math.max(2, h)}px`,
+        background: (barColor as string) || '#1677ff',
+        borderRadius: '4px',
+      });
+
+      const labelStyle = serializeStyleForJsx({
+        fontSize: '12px',
+        textAlign: 'center',
+        marginTop: '4px',
+      });
+
+      return `
+        <div key={${idx}} style={{ ${barStyle} }}>
+          <div style={{ ${barRectStyle} }}></div>
+          <div style={{ ${labelStyle} }}>${d.label}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `<div style={{ ${containerStyle} }}>${barsJsx}
+    </div>`;
   }
 
   if (type === 'CustomButton') {

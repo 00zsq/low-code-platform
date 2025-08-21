@@ -58,48 +58,59 @@ export default function ReactPreview({ code }: ReactPreviewProps): React.ReactEl
     setError(null);
   }, []);
 
-  // 通过postMessage发送代码更新到iframe
-  useEffect(() => {
-    if (!isLoaded || !isReady || !iframeRef.current?.contentWindow) return;
+  // 代码更新处理
+  const updateCode = useCallback((code: string) => {
+    if (!isReady || !iframeRef.current?.contentWindow) return;
     
-    // 避免重复发送相同代码
-    if (debouncedCode === lastCodeRef.current) return;
-    lastCodeRef.current = debouncedCode;
-
     try {
+      // 使用新的消息格式
       iframeRef.current.contentWindow.postMessage({
-        type: 'CODE_UPDATE',
-        code: debouncedCode
+        type: 'updateCode',
+        code: code
       }, '*');
+      
       setError(null);
-    } catch (error) {
-      console.warn('Failed to send code update:', error);
-      setError('通信失败，请刷新页面重试');
-      // 如果postMessage失败，降级到完整重新加载
-      setIsLoaded(false);
-      setIsReady(false);
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
-        setBlobUrl(null);
-      }
+      lastCodeRef.current = code;
+    } catch (err) {
+      console.error('Failed to update code:', err);
+      setError(err instanceof Error ? err.message : String(err));
     }
-  }, [debouncedCode, isLoaded, isReady, blobUrl]);
+  }, [isReady]);
 
-  // 错误处理：监听iframe内的错误消息
+  // 代码更新监听
+  useEffect(() => {
+    if (debouncedCode !== lastCodeRef.current) {
+      updateCode(debouncedCode);
+    }
+  }, [debouncedCode, updateCode]);
+
+  // 消息处理
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'PREVIEW_ERROR') {
-        console.error('Preview error:', event.data.error);
-        setError(event.data.error);
-      } else if (event.data?.type === 'PREVIEW_READY') {
-        setIsReady(true);
-        setError(null);
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      
+      try {
+        const { type, error } = event.data || {};
+        
+        if (type === 'iframeReady') {
+          console.log('Iframe ready received');
+          setIsReady(true);
+          // iframe准备好后立即发送当前代码
+          if (debouncedCode) {
+            updateCode(debouncedCode);
+          }
+        } else if (type === 'error') {
+          console.error('Preview error:', error);
+          setError(error || '预览渲染失败');
+        }
+      } catch (err) {
+        console.error('Message handling error:', err);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [debouncedCode, updateCode]);
 
   // 清理资源
   useEffect(() => {
