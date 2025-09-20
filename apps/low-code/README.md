@@ -1,54 +1,150 @@
-# React + TypeScript + Vite
+# 低代码可视化编辑器
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个基于 React + TypeScript + Vite 构建的低代码可视化编辑器，支持拖拽式组件编辑、实时预览、代码导出等功能。
 
-Currently, two official plugins are available:
+## 🚀 核心特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **🎨 可视化编辑**: 拖拽式组件编辑，所见即所得
+- **📱 响应式设计**: 支持多种设备尺寸预览
+- **🧩 组件化架构**: 丰富的内置组件库，支持自定义扩展
+- **⚡ 实时预览**: 编辑过程中实时查看效果
+- **📤 代码导出**: 支持导出为 HTML/JSX 代码
+- **🔄 微前端集成**: 基于 qiankun 的微前端架构
 
-## Expanding the ESLint configuration
+## 🛠️ 技术栈
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **框架**: React 19 + TypeScript
+- **构建工具**: Vite 6
+- **状态管理**: Zustand
+- **拖拽系统**: React DnD
+- **UI 组件**: Ant Design
+- **微前端**: qiankun
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 📦 快速开始
+
+### 环境要求
+
+- Node.js >= 18
+- pnpm >= 8
+
+### 安装依赖
+
+```bash
+# 在项目根目录安装依赖
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 启动开发服务器
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# 启动低代码编辑器（端口 3001）
+pnpm dev
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+# 或者在根目录启动所有应用
+cd ../../
+pnpm dev
 ```
+
+### 构建生产版本
+
+```bash
+pnpm build
+```
+
+## 🎯 使用指南
+
+### 基本操作
+
+1. **添加组件**: 从左侧物料面板拖拽组件到画布
+2. **选中组件**: 点击画布上的组件进行选中
+3. **移动组件**: 拖拽选中的组件改变位置
+4. **编辑属性**: 在右侧属性面板修改组件属性
+5. **删除组件**: 选中组件后点击删除按钮
+
+### 组件类型
+
+#### 基础组件
+
+- **Text**: 文本组件，支持多种文本类型（标题、段落、强调等）
+- **Image**: 图片组件，支持自定义图片源和尺寸
+- **Div**: 容器组件，可设置背景色、边距等样式
+
+#### 交互组件
+
+- **CustomButton**: 自定义按钮，支持多种主题和样式
+- **CustomInput**: 输入框组件，支持多种输入类型
+
+#### 布局组件
+
+- **FlexContainer**: Flex 布局容器，支持嵌套其他组件
+
+#### 高级组件
+
+- **CustomTable**: 数据表格，支持自定义列和数据
+- **BarChart**: 柱状图组件，支持数据可视化
+
+#### Ant Design 组件
+
+- **antd.Button**: Ant Design 按钮组件
+- **antd.Input**: Ant Design 输入框组件
+
+### 画布操作
+
+- **缩放**: 使用工具栏的缩放控件调整画布显示比例
+- **清空**: 清空画布上的所有组件
+- **导出**: 将设计导出为 HTML 或 JSX 代码
+
+## 🏗️ 项目结构
+
+```
+src/
+├── components/           # 组件目录
+│   ├── Editor/          # 编辑器核心组件
+│   │   ├── Canvas/      # 画布组件
+│   │   ├── MaterialPanel/  # 物料面板
+│   │   ├── PropertyPanel/  # 属性面板
+│   │   └── Toolbar/     # 工具栏
+│   └── renderer/        # 组件渲染器
+├── hooks/               # 自定义 Hooks
+│   └── useDragPosition.ts  # 拖拽定位 Hook
+├── materials/           # 物料定义
+│   ├── basic/          # 基础组件
+│   ├── advanced/       # 高级组件
+│   └── antd/           # Ant Design 组件
+├── store/              # 状态管理
+│   └── editorStore.ts  # 编辑器状态
+├── types/              # 类型定义
+├── utils/              # 工具函数
+└── pages/              # 页面组件
+```
+
+## 🔧 开发指南
+
+### 添加新组件
+
+1. 在 `materials/` 目录下定义组件配置
+2. 在 `components/renderer/items/` 下实现组件渲染逻辑
+3. 更新物料索引文件
+
+### 自定义主题
+
+修改 `src/styles/` 目录下的样式文件来自定义主题。
+
+### 扩展功能
+
+- 状态管理基于 Zustand，易于扩展
+- 组件系统支持插件化扩展
+- 拖拽系统基于 React DnD，可自定义拖拽行为
+
+## 🚀 部署
+
+### 独立部署
+
+```bash
+pnpm build
+# 将 dist 目录部署到静态服务器
+```
+
+### 微前端部署
+
+作为 qiankun 子应用部署，需要配置主应用的路由和加载逻辑。

@@ -6,44 +6,58 @@ import DuplicateModal from './DuplicateModal';
 import './PropertyPanel.css';
 import type { PropConfig } from '../../../types/editor';
 
+/**
+ * 属性面板组件
+ * 用于编辑选中组件的属性配置
+ * 支持多种属性类型：字符串、数字、布尔值、选择器、颜色等
+ * 为复杂组件（如图表、表格）提供专门的编辑界面
+ */
 const PropertyPanel: React.FC = () => {
-  const {
-    canvas,
-    selectedId,
-    updateComponent,
-    removeComponent,
-    // duplicateComponent,
-  } = useEditorStore();
-  // Hooks 必须在组件顶层调用，避免条件分支导致顺序变化
-  const [isDupOpen, setDupOpen] = React.useState(false);
-  // duplicate modal state moved out
-  // BarChart 简化输入：属性面板与弹窗共用
+  const { canvas, selectedId, updateComponent, removeComponent } =
+    useEditorStore();
+
+  // 组件状态管理（Hooks 必须在组件顶层调用）
+  const [isDupOpen, setDupOpen] = React.useState(false); // 数据编辑弹窗状态
+
+  // BarChart 组件的简化输入状态
   const [barValuesText, setBarValuesText] = React.useState<string>('');
   const [barLabelsText, setBarLabelsText] = React.useState<string>('');
-  // removed duplicate-related local states
 
+  // 获取当前选中的组件
   const selectedComponent = canvas.components.find((c) => c.id === selectedId);
 
+  /**
+   * 当选中组件变化时，同步更新本地编辑状态
+   * 主要用于 BarChart 组件的数据编辑
+   */
   React.useEffect(() => {
     if (!selectedComponent) return;
+
+    // 为 BarChart 组件初始化编辑状态
     if (selectedComponent.type === 'BarChart') {
       try {
+        // 解析图表数据
         const arr = JSON.parse(
           (selectedComponent.props.dataJson as string) || '[]'
         ) as Array<{ label: string; value: number }>;
+
+        // 分离数值和标签数组
         const values = arr.map((d) => d.value);
         const labels = arr.map((d) => d.label);
+
+        // 更新本地编辑状态
         setBarValuesText(JSON.stringify(values));
         setBarLabelsText(JSON.stringify(labels));
       } catch {
+        // 解析失败时使用默认值
         setBarValuesText('[]');
         setBarLabelsText('[]');
       }
     } else {
+      // 非 BarChart 组件清空编辑状态
       setBarValuesText('');
       setBarLabelsText('');
     }
-    // CustomTable 的属性面板简化输入已移除，这里不再维护本地镜像状态
   }, [selectedComponent]);
 
   if (!selectedComponent) {

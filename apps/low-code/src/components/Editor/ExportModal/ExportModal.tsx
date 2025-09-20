@@ -8,13 +8,26 @@ import {
 } from '../../../utils/exporters';
 import './ExportModal.css';
 
+/**
+ * 导出模态框组件属性接口
+ */
 interface ExportModalProps {
+  /** 是否显示模态框 */
   open: boolean;
+  /** 关闭模态框的回调函数 */
   onClose: () => void;
 }
 
+/**
+ * 代码导出模态框组件
+ * 支持将低代码设计导出为 React JSX、HTML、JSON 三种格式
+ * 提供代码预览、复制到剪贴板、下载文件等功能
+ */
 const ExportModal: React.FC<ExportModalProps> = ({ open, onClose }) => {
+  // 当前激活的标签页（react/html/json）
   const [activeTab, setActiveTab] = React.useState<string>('react');
+
+  // 存储三种格式的导出代码
   const [codes, setCodes] = React.useState<{
     react: string;
     html: string;
@@ -25,10 +38,14 @@ const ExportModal: React.FC<ExportModalProps> = ({ open, onClose }) => {
     json: '',
   });
 
-  // 生成所有格式的代码
+  /**
+   * 当模态框打开时，生成所有格式的导出代码
+   * 使用 useEffect 确保每次打开都重新生成最新的代码
+   */
   React.useEffect(() => {
     if (open) {
       try {
+        // 调用导出工具函数生成三种格式的代码
         const reactCode = exportToReactCode(false); // 不直接下载，只获取代码
         const htmlCode = exportToHTML(false); // 不直接下载，只获取代码
         const jsonCode = exportToJSON(false); // 不直接下载，只获取代码
@@ -45,7 +62,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ open, onClose }) => {
     }
   }, [open]);
 
-  // 复制代码到剪贴板
+  /**
+   * 复制当前标签页的代码到剪贴板
+   * 使用现代浏览器的 Clipboard API
+   */
   const handleCopyCode = async () => {
     try {
       const currentCode = codes[activeTab as keyof typeof codes];
@@ -57,13 +77,17 @@ const ExportModal: React.FC<ExportModalProps> = ({ open, onClose }) => {
     }
   };
 
-  // 导出文件
+  /**
+   * 导出当前标签页的代码为文件
+   * 根据不同的代码类型设置相应的文件名和 MIME 类型
+   */
   const handleExportFile = () => {
     try {
       const currentCode = codes[activeTab as keyof typeof codes];
       let fileName = '';
       let mimeType = '';
 
+      // 根据当前标签页确定文件格式
       switch (activeTab) {
         case 'react':
           fileName = 'GeneratedPage.jsx';
@@ -82,6 +106,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ open, onClose }) => {
           mimeType = 'text/plain';
       }
 
+      // 创建 Blob 对象并触发下载
       const blob = new Blob([currentCode], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -90,7 +115,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ open, onClose }) => {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url); // 清理内存
 
       message.success(`${fileName} 导出成功`);
     } catch (error) {
