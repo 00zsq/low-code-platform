@@ -1,19 +1,42 @@
+/**
+ * React代码预览组件
+ * 
+ * 该组件负责在安全的iframe环境中执行和预览React/JSX/TSX代码。
+ * 核心功能包括：
+ * 1. iframe沙箱隔离执行
+ * 2. 实时热更新
+ * 3. 错误捕获和显示
+ * 4. 防抖优化
+ * 5. 资源管理
+ */
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { generateReactPreviewHtml } from '../../utils/htmlTemplate';
 
+// React预览组件属性接口
 interface ReactPreviewProps {
-  code: string;
+  code: string; // 要预览的React/JSX/TSX代码
 }
 
-// 防抖hook
+/**
+ * 防抖Hook
+ * 
+ * 用于减少高频率更新对性能的影响。
+ * 当用户快速输入代码时，只有在停止输入一段时间后才触发预览更新。
+ * 
+ * @param value 需要防抖的值
+ * @param delay 防抖延迟时间（毫秒）
+ * @returns 防抖后的值
+ */
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
+    // 设置延迟定时器
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
 
+    // 清理上一次的定时器
     return () => {
       clearTimeout(handler);
     };
@@ -22,20 +45,34 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+/**
+ * React预览主组件
+ * 
+ * 使用iframe沙箱模式安全执行React代码，实现：
+ * 1. 代码安全执行（防止影响主应用）
+ * 2. 实时热更新（代码变更立即生效）
+ * 3. 错误隔离和显示
+ * 4. 资源管理和清理
+ */
 export default function ReactPreview({ code }: ReactPreviewProps): React.ReactElement {
+  // iframe DOM引用
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const lastCodeRef = useRef<string>('');
+  
+  // 组件状态管理
+  const [isLoaded, setIsLoaded] = useState(false); // iframe是否加载完成
+  const [isReady, setIsReady] = useState(false); // iframe内部环境是否就绪
+  const [blobUrl, setBlobUrl] = useState<string | null>(null); // Blob URL缓存
+  const [error, setError] = useState<string | null>(null); // 错误信息
+  const lastCodeRef = useRef<string>(''); // 上次执行的代码（用于去重）
   
   // 使用防抖优化代码更新频率
+  // 300ms延迟可以在用户输入时减少不必要的更新
   const debouncedCode = useDebounce(code, 300);
 
-  // 生成iframe的HTML内容（只在首次加载时）
+  // 生成iframe的HTML模板（只生成一次，提高性能）
+  // 初始不传入代码，后续通过postMessage动态更新
   const srcDoc = useMemo(() => {
-    return generateReactPreviewHtml('');
+    return generateReactPreviewHtml(''); // 空字符串表示初始无代码
   }, []);
 
   // 创建初始iframe

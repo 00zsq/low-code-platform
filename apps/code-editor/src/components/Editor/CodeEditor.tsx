@@ -1,18 +1,30 @@
+/**
+ * Monaco代码编辑器组件
+ *
+ * 功能特性：
+ * - 支持JSON和TypeScript语法高亮
+ * - 智能代码补全和错误检查
+ * - 主题切换（明暗主题）
+ * - React/JSX类型定义支持
+ * - 实时主题同步
+ * - 性能优化的配置
+ */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import type { Monaco } from '@monaco-editor/react';
 import type { Language } from '../../types';
 
+// 代码编辑器组件属性接口
 export interface CodeEditorProps {
-  language: Language;
-  value: string;
-  onChange: (next: string) => void;
+  language: Language; // 编程语言模式
+  value: string; // 当前代码内容
+  onChange: (next: string) => void; // 代码变更回调
 }
 
 export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
   const { language, value, onChange } = props;
-  const editorRef = useRef<any>(null);
-  const monacoRef = useRef<Monaco | null>(null);
+  const editorRef = useRef<any>(null); // Monaco编辑器实例引用
+  const monacoRef = useRef<Monaco | null>(null); // Monaco API引用
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => {
     // 使用localStorage作为第一优先级，确保主题一致性
@@ -28,9 +40,11 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
     return theme;
   });
 
+  // 将应用语言模式映射到Monaco编辑器语言
   const monacoLanguage = language === 'json' ? 'json' : 'typescript';
 
-  // 优化的主题更新：直接更新Monaco主题而不重建编辑器
+  // 监听主题变化并同步到Monaco编辑器
+  // 优化：直接更新Monaco主题而不重建编辑器实例
   useEffect(() => {
     const checkTheme = () => {
       const domTheme =
@@ -72,15 +86,20 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
     };
   }, [currentTheme, isEditorReady]);
 
+  /**
+   * Monaco编辑器挂载前的配置
+   * 设置主题、类型定义、编译选项等
+   */
   const beforeMount = useCallback(
     (monaco: Monaco) => {
       monacoRef.current = monaco;
       const monacoTheme = currentTheme === 'light' ? 'vs' : 'vs-dark';
 
-      // 设置主题
+      // 设置编辑器主题
       monaco.editor.setTheme(monacoTheme);
 
-      // 全局类型补充：声明 React/ReactDOM 为全局
+      // 为TypeScript模式添加React全局类型定义
+      // 这样用户就可以直接使用React和ReactDOM而无需导入
       const reactGlobals = [
         'declare const React: any;',
         'declare const ReactDOM: any;',
@@ -89,6 +108,7 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
       ].join('\n');
 
       try {
+        // 添加React类型定义到TypeScript和JavaScript环境
         monaco.languages.typescript.typescriptDefaults.addExtraLib(
           reactGlobals,
           'file:///global-react.d.ts'
@@ -98,6 +118,7 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
           'file:///global-react.d.ts'
         );
 
+        // 配置TypeScript编译选项，支持现代JS特性和JSX
         const compilerOptions = {
           target: monaco.languages.typescript.ScriptTarget.ES2020,
           jsx: monaco.languages.typescript.JsxEmit.React,
@@ -132,6 +153,10 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
     [currentTheme]
   );
 
+  /**
+   * Monaco编辑器挂载完成回调
+   * 保存编辑器实例引用并标记为就绪状态
+   */
   const onMount = useCallback(
     (editor: any, monaco: Monaco) => {
       editorRef.current = editor;
@@ -144,6 +169,7 @@ export default function CodeEditor(props: CodeEditorProps): React.ReactElement {
     [currentTheme]
   );
 
+  // 处理代码内容变更
   const handleChange = useCallback(
     (val: string | undefined) => {
       onChange(val || '');

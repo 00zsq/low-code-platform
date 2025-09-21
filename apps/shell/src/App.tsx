@@ -73,7 +73,7 @@ const AppContent: React.FC = () => {
           container: '#code-editor-container',
           props: {},
           sandbox: {
-            strictStyleIsolation: false,
+            strictStyleIsolation: true,
             experimentalStyleIsolation: false,
             excludeAssetFilter: (assetUrl: string) => {
               return (
